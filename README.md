@@ -1,4 +1,4 @@
-# Mordicai-Reborn
+# SwiftGuard-Academia
  A webbased university portal encapsualting the following features:
 * Routing and other REST services handled by ***express JS***.
 * Front-End contrived using ***Ejs veiwing engine*** and ***Bootstrap 4.0*** 
