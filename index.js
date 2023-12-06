@@ -5,13 +5,15 @@ const db=require('./database.js')
 const ejs=require('ejs')
 const res = require('express/lib/response')
 const linkVarCatcher=('./buttonchanges.js')
-
-
+const { check, validationResult } = require('express-validator');//input validation
+const crypto = require ("crypto");//encryption
+const cookieParser = require('cookie-parser')
 const app=express()
 app.set('view engine', 'ejs');
 app.use(express.static("public"))
 app.use(bodyParser.urlencoded({extended:true}))
-
+// let’s you use the cookieParser in your application
+app.use(cookieParser());
 var userName
 var gradeChoiceChecker=0;
 var isTeacher;
@@ -28,7 +30,10 @@ fs.readFile(__dirname+'/currsemid.txt', 'utf-8',function (err, data) {
 currSemID=data
 });
 
-
+app.get('/setcookie', (req, res) => {
+    res.cookie(`Cookie token name`,`encrypted cookie string Value`);
+    res.send('Cookie have been saved successfully');
+});
 var student ={
    Name:"",
    Batch:0,
@@ -40,6 +45,7 @@ var student ={
    Pay:0,
    Ins_name:""
 }
+
 var instructor={
     Name:"",
     Ins_ID:0,
@@ -50,10 +56,23 @@ var instructor={
     Departments_D_Code:0,
     Designation:""
 }
+//a get route for adding a cookie
 
 app.get('/',function(req,res){
-    res.sendFile(__dirname+'/public/html/login.html')
-})
+    
+    res.cookie(`Cookie token name`,`encrypted cookie string Value`,{
+        maxAge: 5000,
+        // expires works the same as the maxAge
+        expires: new Date('01 12 2021'),
+        secure: true,
+        httpOnly: true,
+        sameSite: 'lax'
+    });
+    console.log(req.cookies);
+    res.sendFile(__dirname + '/public/html/login.html');
+    console.log(req.cookies);
+    });
+
 app.get('/register.html',function(req,res){
     res.sendFile(__dirname+'/public/html/register.html')
 })
@@ -98,8 +117,14 @@ app.get('/acceptinsertstudentcourse', (req, res) => {
 });
 
   
+//--------------Post 1
+app.post('/acceptinsertstudentcourse', function(req,res){
+    const errors = validationResult(req);
 
-app.post('/acceptinsertstudentcourse',function(req,res){
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+      }
     
     console.log("acceptinsertexeciuting")
     var checked=req.body.checked
@@ -111,8 +136,17 @@ app.post('/acceptinsertstudentcourse',function(req,res){
     }
     res.render('welcome',{isAdmin:false,isTeacher:isTeacher,NAME:student.Name,BATCH:student.Batch,EMAIL:student.Email,ADDRESS:student.Address,ID:student.ID,INSTRUCTORS_ID:student.Instructor_Ins_ID,ALLOCATEDSECTION:student.Allocated_Section,PAY:student.Pay})
 })
+
+//-----------------------Post 2
+
 app.post('/acceptassignedTA',function(req,res){
     console.log(req.body.checked.length)
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var checked=req.body.checked
     console.log("checked is " +checked)
     
@@ -162,7 +196,17 @@ app.get('/addintable',function(req,res){
       tableChecker=true
     
 })
+
+//------------------Post 3
 app.post('/addintable',function(req,res){
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
+
     if(tableChecker==true)
     {
         var table=req.body.tableSelector
@@ -176,11 +220,24 @@ app.post('/addintable',function(req,res){
     }
 })
 
+//-----------------post 4
 app.post('/Semester',function(req,res){
-    
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
 })
 
+//----------------------post 5
 app.post('/InsertIntoSEMESTER',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
         var values={
              DURATION:req.body.DURATION,
              NAME:req.body.NAME,
@@ -193,7 +250,15 @@ app.post('/InsertIntoSEMESTER',function(req,res){
     
         })
 })
+
+//---------post 6
 app.post('/InsertIntoCOURSES',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var values={
          ID:req.body.ID,
          CREDIT_HOURS:req.body.CREDIT_HOURS,
@@ -208,6 +273,12 @@ app.post('/InsertIntoCOURSES',function(req,res){
      })
 })
 app.post('/InsertIntoDEPARTMENTS',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var values={
          D_NAME:req.body.D_NAME,
          D_CODE:req.body.D_CODE,
@@ -222,6 +293,12 @@ app.post('/InsertIntoDEPARTMENTS',function(req,res){
      })
 })
 app.post('/InsertIntoINSTRUCTOR_TEACHES_COURSE',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var values={
          INSTRUCTORS_INS_ID:req.body.INSTRUCTORS_INS_ID,
          COURSES_ID:req.body.COURSES_ID,
@@ -235,6 +312,12 @@ app.post('/InsertIntoINSTRUCTOR_TEACHES_COURSE',function(req,res){
      })
 })
 app.post('/InsertIntoINSTRUCTORS',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var values={
          NAME:req.body.NAME,
          INS_ID:req.body.INS_ID,
@@ -255,6 +338,12 @@ app.get('/updatestudent',function(req,res){
     res.render('updatestudent.ejs')
 })
 app.post('/updatestudent',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var email=req.body.email
     var address=req.body.Address
     student.Address=address
@@ -268,6 +357,12 @@ app.get('/updateteacher',function(req,res){
     res.render('updateteacher.ejs')
 })
 app.post('/updateteacher',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var email=req.body.email
     var address=req.body.Address
     instructor.Address=address
@@ -277,7 +372,17 @@ app.post('/updateteacher',function(req,res){
         res.render('welcome',{isAdmin:false,isTeacher:isTeacher,NAME:instructor.Name,INS_ID:instructor.Ins_ID,ADDRESS:instructor.Address,START_DATE:instructor.Start_Date,EMAIL:instructor.Email})
     })
 })
+
+
+
 app.post('/InsertIntoSTUDENT',function(req,res){
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var values={
          NAME:req.body.NAME,
          BATCH:req.body.BATCH,
@@ -294,6 +399,12 @@ app.post('/InsertIntoSTUDENT',function(req,res){
      })
 })
 app.post('/InsertIntoSTUDENT_ALLOTTED_SECTIONS',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var values={
          STUDENT_ID:req.body.STUDENT_ID,
          SECTIONS_ID:req.body.SECTIONS_ID,
@@ -307,6 +418,12 @@ app.post('/InsertIntoSTUDENT_ALLOTTED_SECTIONS',function(req,res){
      })
 })
 app.post('/InsertIntoSTUDENT_ENROLLED_IN_SEMESTER',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var values={
          STUDENT_ID:req.body.STUDENT_ID,
          SEMESTER_SEMESTER_ID:req.body.SEMESTER_SEMESTER_ID,
@@ -320,6 +437,12 @@ app.post('/InsertIntoSTUDENT_ENROLLED_IN_SEMESTER',function(req,res){
      })
 })
 app.post('/InsertIntoSTUDENT_TAKES_COURSE',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var values={
          STUDENT_ID:req.body.STUDENT_ID,
          COURSES_ID:req.body.COURSES_ID,
@@ -336,7 +459,14 @@ app.post('/InsertIntoSTUDENT_TAKES_COURSE',function(req,res){
 
      })
 })
-app.post('/InsertIntoSECTIONS',function(req,res){
+app.post('/InsertIntoSECTIONS',
+function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var values={
          ID:req.body.ID,
          CR_NAME:req.body.CR_NAME,
@@ -379,6 +509,12 @@ var selectedCourse=""
 var selectedSection=""
 var userLength=0
 app.post('/displaystudentlist',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     if(sectionChecker==true)
     {
         selectedCourse=req.body.courseSelector
@@ -407,7 +543,12 @@ app.post('/displaystudentlist',function(req,res){
     }
 })
 app.post('/displaygradingtable',function(req,res){
+    const errors = validationResult(req);
 
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     if(sectionChecker==true)
     {
         selectedCourse=req.body.courseSelector
@@ -451,6 +592,12 @@ app.get('/viewtranscript',function(req,res){
     })
 })
 app.post('/acceptinserttable',function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
    
     db.insertGradesInTable(req.body,selectedCourse,selectedSection).then(user=>{
         console.log('prehaps this worked')
@@ -472,6 +619,12 @@ app.get('/contactteacher',function(req,res){
 })
 
 app.post("/grades",function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     gradeChoiceChecker++;
     if(gradeChoiceChecker==1)
     {
@@ -496,6 +649,13 @@ app.post("/grades",function(req,res){
 
 })
 app.post("/register.html",function(req,res){
+
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     var userName=req.body.userName
     var email=req.body.emailAddress
     var pWord=req.body.pWord
@@ -521,6 +681,12 @@ app.get('/welcometeacher',function(req,res){
 })
  
 app.post("/",function(req,res){
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+        // Return validation errors to the client
+        return res.status(422).json({ errors: errors.array() });
+    }
     userName=req.body.userName
     var pWord=req.body.pWord
      isTeacher=req.body.teacherCheckBox
@@ -614,6 +780,7 @@ app.post("/",function(req,res){
     }
    // res.render('home',{Name:user.rows[0].FNAME,Phone:user.rows[0].PHONE,Email:user.rows[0].EMAIL})
 })
+
 
 app.listen(process.env.PORT || 3000,function(){
     console.log("Server is running at port 3000")
