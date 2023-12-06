@@ -1,0 +1,55 @@
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+<!------ Include the above in your HEAD tag ---------->
+
+<div class="container">
+	<form action='/acceptinserttable' method='post'>
+    <div class="row clearfix">
+		<div class="col-md-12 column">
+			<table class="table table-bordered table-hover" id="tab_logic">
+				<thead>
+					<tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Student Id</th>
+                        <th scope="col">Quizz/Assignemnts </th>
+                        <th scope="col">Mid1</th>
+                        <th scope="col">Mid2</th>
+                        <th scope="col">Finals</th>
+                        <th scope="col">sgpa</th>
+				</thead>
+				<tbody>
+					<<% for(var i=0;i<Courses.STUDENT_ID.length;i++){%>
+					<tr id='addr0' name=<%=i%>>
+						<td>1</td>
+						<td>
+						<input type="text" name='STUDENT_ID'  value='<%= Courses.STUDENT_ID[i]%>' class="form-control"/>
+						</td>
+						<td>
+						<input type="text" name='ASS_QUIZZ' value='<%= Courses.ASS_QUIZZ[i]%>' class="form-control"/>
+						</td>
+						<td>
+						<input type="text" name='MID_1' value='<%= Courses.MID_1[i]%>' class="form-control"/>
+						</td>
+                        <td>
+						<input type="text" name='MID_2' value='<%= Courses.MID_2[i]%>' class="form-control"/>
+						</td>
+                        <td>
+                            <input type="text" name='FINAL' value='<%= Courses.FINAL[i]%>' class="form-control"/>
+                        </td>
+                        <td>
+                            <input type="text" name='SGPA' value='<%= Courses.GPA[i]%>' class="form-control"/>
+                        </td>
+					</tr>
+					<% } %>
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<button id="add_row" class="btn btn-default pull-left" type='submit'>Submit</button>
+	</form>
+	
+</div>
+db.getStudentEnrolledCourses(student.ID).then(user=>{
+	res.render('grades',{Semesters:user})
+})
