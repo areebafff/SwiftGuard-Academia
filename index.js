@@ -1,24 +1,48 @@
-const fs=require('fs')
+const fs=require('fs');
 const express=require('express')
 const bodyParser=require('body-parser')
 const db=require('./database.js')
 const ejs=require('ejs')
 const res = require('express/lib/response')
 const linkVarCatcher=('./buttonchanges.js')
-const { check, validationResult } = require('express-validator');//input validation
+
+//input validation
+const { check, validationResult } = require('express-validator');
+
+//cryptography
 const crypto = require ("crypto");//encryption
+const algorithm = "aes-256-cbc"; 
+const initVector = crypto.randomBytes(16);
+const message = "This is a secret message";
+const Securitykey = crypto.randomBytes(32);
+const cipher = crypto.createCipheriv(algorithm, Securitykey, initVector);
+let encryptedData = cipher.update(message, "utf-8", "hex");
+encryptedData += cipher.final("hex");
+console.log("Encrypted message: " + encryptedData);
+
+//cookie
 const cookieParser = require('cookie-parser')
 const app=express()
+const helmet = require("helmet");
 app.set('view engine', 'ejs');
+app.use(helmet());
 app.use(express.static("public"))
 app.use(bodyParser.urlencoded({extended:true}))
-// let’s you use the cookieParser in your application
+
+//  use the cookieParser in application
 app.use(cookieParser());
 var userName
 var gradeChoiceChecker=0;
 var isTeacher;
 var currRunningSem=''
 var currSemID
+
+app.get('/setcookie', (req, res) => {
+    res.cookie(`Cookie token name`,`%687y8o@we27617263%`);
+    res.send('Cookie have been saved successfully');
+});
+
+
 fs.readFile(__dirname+'/currsem.txt', 'utf-8',function (err, data) {
     if (err) throw err;
 
@@ -30,10 +54,7 @@ fs.readFile(__dirname+'/currsemid.txt', 'utf-8',function (err, data) {
 currSemID=data
 });
 
-app.get('/setcookie', (req, res) => {
-    res.cookie(`Cookie token name`,`encrypted cookie string Value`);
-    res.send('Cookie have been saved successfully');
-});
+
 var student ={
    Name:"",
    Batch:0,
@@ -61,16 +82,19 @@ var instructor={
 app.get('/',function(req,res){
     
     res.cookie(`Cookie token name`,`encrypted cookie string Value`,{
+        
         maxAge: 5000,
         // expires works the same as the maxAge
-        expires: new Date('01 12 2021'),
+        expires: new Date('01 12 2024'),
         secure: true,
         httpOnly: true,
         sameSite: 'lax'
     });
     console.log(req.cookies);
-    res.sendFile(__dirname + '/public/html/login.html');
-    console.log(req.cookies);
+    res.sendFile(__dirname + '/public/html/login.html', function() {
+        console.log("after");
+        console.log(req.cookies);
+    });
     });
 
 app.get('/register.html',function(req,res){
@@ -86,7 +110,7 @@ app.get('/grades',function(req,res)
 })
 app.get('/home',function(req,res)
 {
-
+    console.log(req.cookies);
 })
 
 app.get('/ChooseCourses',function(req,res){
@@ -680,106 +704,168 @@ app.get('/welcometeacher',function(req,res){
     res.render('welcome',{isAdmin:false,isTeacher:isTeacher,NAME:instructor.Name,INS_ID:instructor.Ins_ID,ADDRESS:instructor.Address,START_DATE:instructor.Start_Date,EMAIL:instructor.Email})
 })
  
-app.post("/",function(req,res){
-    const errors = validationResult(req);
+// app.post("/",function(req,res){
+//     const errors = validationResult(req);
 
-    if (!errors.isEmpty()) {
-        // Return validation errors to the client
-        return res.status(422).json({ errors: errors.array() });
-    }
-    userName=req.body.userName
-    var pWord=req.body.pWord
-     isTeacher=req.body.teacherCheckBox
-    console.log(userName+" "+pWord)
-    console.log(typeof(pWord))
+//     if (!errors.isEmpty()) {
+//         // Return validation errors to the client
+//         return res.status(422).json({ errors: errors.array() });
+//     }
+//     userName=req.body.userName
+//     var pWord=req.body.pWord
+//      isTeacher=req.body.teacherCheckBox
+//     console.log(userName+" "+pWord)
+//     console.log(typeof(pWord))
+    
 
-    if(userName=='Admin' && pWord==666)
-    {
-        res.render('welcome',{isAdmin:true,isTeacher:false})
-    }
-    if(isTeacher)
-    {
+//     if(userName=='Admin' && pWord==666)
+//     {
+//         res.render('welcome',{isAdmin:true,isTeacher:false})
+//     }
+//     if(isTeacher)
+//     {
             
-        db.getTeacher(isTeacher,pWord).then(user=>{
+//         db.getTeacher(isTeacher,pWord).then(user=>{
         
-            if(user.rows.length != 0)
-            {
-                console.log(user)
-                instructor.Ins_ID=user.rows[0].INS_ID
-                instructor.Address=user.rows[0].ADDRESS
-                instructor.Departments_D_Code=user.rows[0].DEPARTMENTS_D_CODE
-                instructor.Designation=user.rows[0].DESIGNATION
-                instructor.Email=user.rows[0].EMAIL
-                instructor.Salary=user.rows[0].SALARY
-                instructor.Name=user.rows[0].NAME
-                instructor.Start_Date=user.rows[0].START_DATE
-                res.render('welcome',{isAdmin:false,isTeacher:isTeacher,NAME:instructor.Name,INS_ID:instructor.Ins_ID,ADDRESS:instructor.Address,START_DATE:instructor.Start_Date,EMAIL:instructor.Email})
-                //res.render('welcome',{isTeacher:isTeacher,NAME:user.rows[0].NAME,BATCH:user.rows[0].BATCH,EMAIL:user.rows[0].EMAIL,ADDRESS:user.rows[0].ADDRESS,ID:user.rows[0].ID,INSTRUCTORS_ID:user.rows[0].INSTRUCTORS_INS_ID,ALLOCATEDSECTION:user.rows[0].SECTIONS_ID,PAY:user.rows[0].PAY})
-            }
-            else
-            {      
-                res.render('error', { message: 'User not found or not a teacher.' });
-            }
+//             if(user.rows.length != 0)
+//             {
+//                 console.log(user)
+//                 instructor.Ins_ID=user.rows[0].INS_ID
+//                 instructor.Address=user.rows[0].ADDRESS
+//                 instructor.Departments_D_Code=user.rows[0].DEPARTMENTS_D_CODE
+//                 instructor.Designation=user.rows[0].DESIGNATION
+//                 instructor.Email=user.rows[0].EMAIL
+//                 instructor.Salary=user.rows[0].SALARY
+//                 instructor.Name=user.rows[0].NAME
+//                 instructor.Start_Date=user.rows[0].START_DATE
+//                 res.render('welcome',{isAdmin:false,isTeacher:isTeacher,NAME:instructor.Name,INS_ID:instructor.Ins_ID,ADDRESS:instructor.Address,START_DATE:instructor.Start_Date,EMAIL:instructor.Email})
+//                 //res.render('welcome',{isTeacher:isTeacher,NAME:user.rows[0].NAME,BATCH:user.rows[0].BATCH,EMAIL:user.rows[0].EMAIL,ADDRESS:user.rows[0].ADDRESS,ID:user.rows[0].ID,INSTRUCTORS_ID:user.rows[0].INSTRUCTORS_INS_ID,ALLOCATEDSECTION:user.rows[0].SECTIONS_ID,PAY:user.rows[0].PAY})
+//             }
+//             else
+//             {      
+//                 res.render('error', { message: 'User not found or not a teacher.' });
+//             }
          
     
-        })
-    }
-    else{
-        console.log("Not a teacher")
-        db.studentGetter(userName,pWord).then(user=>{
-            if(user.rows.length != 0)
-            {
-                console.log(user)
-                student.Name=user.rows[0].NAME
-                student.Batch=user.rows[0].BATCH
-                student.Email=user.rows[0].EMAIL
-                student.ID=user.rows[0].ID
-                student.Allocated_Section=user.rows[0].SECTIONS_ID
-                student.Instructor_Ins_ID=user.rows[0].INSTRUCTORS_INS_ID
-                student.Pay=user.rows[0].PAY
-                student.Address=user.rows[0].ADDRESS
-                console.log(student)
-                var hamun=''
-                var trig
-                if(student.Instructor_Ins_ID==null)
-                {
+//         })
+//     }
+//     else{
+//         console.log("Not a teacher")
+//         db.studentGetter(userName,pWord).then(user=>{
+//             if(user.rows.length != 0)
+//             {
+//                 console.log(user)
+//                 student.Name=user.rows[0].NAME
+//                 student.Batch=user.rows[0].BATCH
+//                 student.Email=user.rows[0].EMAIL
+//                 student.ID=user.rows[0].ID
+//                 student.Allocated_Section=user.rows[0].SECTIONS_ID
+//                 student.Instructor_Ins_ID=user.rows[0].INSTRUCTORS_INS_ID
+//                 student.Pay=user.rows[0].PAY
+//                 student.Address=user.rows[0].ADDRESS
+//                 console.log(student)
+//                 var hamun=''
+//                 var trig
+//                 if(student.Instructor_Ins_ID==null)
+//                 {
 
-                }
-                else
-                {
-                    db.getTeacher('yada',student.Instructor_Ins_ID).then(user=>{
-                        console.log("fivvvvvver" +(user.rows[0].NAME))
-                        student.Ins_name=user.rows[0].NAME
-                        console.log('asuayfuasyf asuaysfua sifua ' +student.Ins_name)
-                        hamun=user.rows[0].NAME
-                        console.log("asdasudyaiusyda " +hamun)
-                        //trig=user
-                        console.log(trig)
-                        student.Instructor_Ins_ID=toString(student.Instructor_Ins_ID)
-                        student.Instructor_Ins_ID=user.rows[0].NAME
+//                 }
+//                 else
+//                 {
+//                     db.getTeacher('yada',student.Instructor_Ins_ID).then(user=>{
+//                         console.log("fivvvvvver" +(user.rows[0].NAME))
+//                         student.Ins_name=user.rows[0].NAME
+//                         console.log('asuayfuasyf asuaysfua sifua ' +student.Ins_name)
+//                         hamun=user.rows[0].NAME
+//                         console.log("asdasudyaiusyda " +hamun)
+//                         //trig=user
+//                         console.log(trig)
+//                         student.Instructor_Ins_ID=toString(student.Instructor_Ins_ID)
+//                         student.Instructor_Ins_ID=user.rows[0].NAME
                         
-                    })
-                }
+//                     })
+//                 }
                
-                console.log(typeof(student.Instructor_Ins_ID))
-                var str=""
-                str=student.Instructor_Ins_ID
-                str=toString(str)
-                hamun=toString(hamun)
-                console.log(typeof(hamun))
-                console.log(typeof(str))
-               // console.log("hamun" + trig.rows[0].NAME)
+//                 console.log(typeof(student.Instructor_Ins_ID))
+//                 var str=""
+//                 str=student.Instructor_Ins_ID
+//                 str=toString(str)
+//                 hamun=toString(hamun)
+//                 console.log(typeof(hamun))
+//                 console.log(typeof(str))
+//                // console.log("hamun" + trig.rows[0].NAME)
 
-                res.render('welcome',{isAdmin:false,isTeacher:isTeacher,NAME:student.Name,BATCH:student.Batch,EMAIL:student.Email,ADDRESS:student.Address,ID:student.ID,INSTRUCTORS_ID:student.Instructor_Ins_ID,ALLOCATEDSECTION:student.Allocated_Section,PAY:student.Pay})
-            }
-            else
-            {      
+//                 res.render('welcome',{isAdmin:false,isTeacher:isTeacher,NAME:student.Name,BATCH:student.Batch,EMAIL:student.Email,ADDRESS:student.Address,ID:student.ID,INSTRUCTORS_ID:student.Instructor_Ins_ID,ALLOCATEDSECTION:student.Allocated_Section,PAY:student.Pay})
+//             }
+//             else
+//             {      
                
+//             }
+//         })
+//     }
+//    // res.render('home',{Name:user.rows[0].FNAME,Phone:user.rows[0].PHONE,Email:user.rows[0].EMAIL})
+// })
+
+const bcrypt = require('bcrypt');
+
+// Your other imports and setup for Express
+
+app.post("/", async function (req, res) {
+    try {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+            // Return validation errors to the client
+            return res.status(422).json({ errors: errors.array() });
+        }
+
+        const userName = req.body.userName;
+        const plainTextPassword = req.body.pWord;
+        const isTeacher = req.body.teacherCheckBox;
+        console.log(userName + " " + plainTextPassword);
+
+        let user;
+
+        if (userName === 'Admin' && plainTextPassword === '666') {
+            // Admin login
+            return res.render('welcome', { isAdmin: true, isTeacher: false });
+        } else if (isTeacher) {
+            // Teacher login
+            user = await db.getTeacher(isTeacher, plainTextPassword);
+        } else {
+            // Student login
+            user = await db.studentGetter(userName, plainTextPassword);
+        }
+
+        if (user.rows.length !== 0) {
+            // User found
+            const hashedPassword = user.rows[0].PASSWORD;
+
+            // Compare hashed password with the plain text password provided by the user
+            const passwordMatch = await bcrypt.compare(plainTextPassword, hashedPassword);
+
+            if (passwordMatch) {
+                // Passwords match, proceed with rendering welcome page
+                return res.render('welcome', {
+                    isAdmin: false,
+                    isTeacher: isTeacher,
+                    // Include other user information in the render
+                });
+            } else {
+                // Passwords do not match
+                return res.render('error', { message: 'Incorrect username or password.' });
             }
-        })
+        } else {
+            // User not found
+            return res.render('error', { message: 'User not found or not authorized.' });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).render('error', { message: 'Internal Server Error.' });
     }
-   // res.render('home',{Name:user.rows[0].FNAME,Phone:user.rows[0].PHONE,Email:user.rows[0].EMAIL})
-})
+});
+
+
 
 
 app.listen(process.env.PORT || 3000,function(){

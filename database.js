@@ -119,7 +119,7 @@ async function insertStudent(userName,pWord,email,phone) {
          ,[pWord],  // bind value for :id
             {autoCommit:true}
          );
-         console.log("Maa kee CHUUUUUU")
+        
          console.log(result)
          
          return result
