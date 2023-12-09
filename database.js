@@ -40,6 +40,39 @@ async function getStudent(userName,pWord) {
     }
   }
 }
+
+async function getAdmin(id, pWord) {
+  console.log("getAdmin " + pWord)
+
+  let connection;
+
+  try {
+    connection = await oracledb.getConnection({
+      user: "mor",
+      password: "fast123",
+      connectString: "localhost:1521/orcl"
+    });
+
+    const result = await connection.execute(
+      `SELECT id, password FROM admin WHERE id = :Admin`,
+      [id]
+    );
+
+    console.log(result.rows);
+    return result.rows;
+  } catch (err) {
+    console.error(err);
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+}
+
 async function insertStudent(userName,pWord,email,phone) {
 
     let connection;
@@ -985,5 +1018,6 @@ module.exports={
     getStudentMarksinCourse,
     getStudentSemesters,
     updateStudent,
-    updateTeacher
+    updateTeacher,
+    getAdmin
 }

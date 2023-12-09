@@ -19,6 +19,8 @@ const cipher = crypto.createCipheriv(algorithm, Securitykey, initVector);
 let encryptedData = cipher.update(message, "utf-8", "hex");
 encryptedData += cipher.final("hex");
 console.log("Encrypted message: " + encryptedData);
+const saltRounds = 10;
+
 
 //cookie
 const cookieParser = require('cookie-parser')
@@ -807,8 +809,63 @@ app.get('/welcometeacher',function(req,res){
 // })
 
 const bcrypt = require('bcrypt');
-
+const salt = bcrypt.genSaltSync(saltRounds);
 // Your other imports and setup for Express
+
+// app.post("/", async function (req, res) {
+//     try {
+//         const errors = validationResult(req);
+
+//         if (!errors.isEmpty()) {
+//             // Return validation errors to the client
+//             return res.status(422).json({ errors: errors.array() });
+//         }
+
+//         const userName = req.body.userName;
+//         const plainTextPassword = req.body.pWord;
+//         const isTeacher = req.body.teacherCheckBox;
+//         console.log(userName + " " + plainTextPassword);
+
+//         let user;
+
+//         if (userName === 'Admin' && plainTextPassword === '666') {
+//             // Admin login
+//             return res.render('welcome', { isAdmin: true, isTeacher: false });
+//         } else if (isTeacher) {
+//             // Teacher login
+//             user = await db.getTeacher(isTeacher, plainTextPassword);
+//         } else {
+//             // Student login
+//             user = await db.studentGetter(userName, plainTextPassword);
+//         }
+
+//         if (user.rows.length !== 0) {
+//             // User found
+//             const hashedPassword = user.rows[0].PASSWORD;
+
+//             // Compare hashed password with the plain text password provided by the user
+//             const passwordMatch = await bcrypt.compare(plainTextPassword, hashedPassword);
+
+//             if (passwordMatch) {
+//                 // Passwords match, proceed with rendering welcome page
+//                 return res.render('welcome', {
+//                     isAdmin: false,
+//                     isTeacher: isTeacher,
+//                     // Include other user information in the render
+//                 });
+//             } else {
+//                 // Passwords do not match
+//                 return res.render('error', { message: 'Incorrect username or password.' });
+//             }
+//         } else {
+//             // User not found
+//             return res.render('error', { message: 'User not found or not authorized.' });
+//         }
+//     } catch (error) {
+//         console.error(error);
+//         return res.status(500).render('error', { message: 'Internal Server Error.' });
+//     }
+// });
 
 app.post("/", async function (req, res) {
     try {
@@ -824,47 +881,69 @@ app.post("/", async function (req, res) {
         const isTeacher = req.body.teacherCheckBox;
         console.log(userName + " " + plainTextPassword);
 
-        let user;
-
-        if (userName === 'Admin' && plainTextPassword === '666') {
+        if (userName.toLowerCase() === 'admin') {
             // Admin login
-            return res.render('welcome', { isAdmin: true, isTeacher: false });
+            const adminData = await db.getAdmin(userName, plainTextPassword);
+            
+            if (adminData.length !== 0) {
+                // Admin found
+                console.log(adminData[0].PASSWORD)
+                const Password = adminData[0].PASSWORD;
+                console.log(Password);
+                console.log(plainTextPassword);
+                const hashedPassword = bcrypt.hashSync(plainTextPassword, salt);
+                // Compare hashed password with the plain text password provided by the user
+                const passwordMatch = await bcrypt.compare(plainTextPassword, hashedPassword);
+                console.log(passwordMatch)
+                if (passwordMatch) {
+                    // Passwords match, proceed with rendering welcome page for admin
+                    return res.render('welcome', { isAdmin: true, isTeacher: false });
+                } else {
+                    // Passwords do not match
+                    return res.render('error', { message: 'Incorrect username or password.' });
+                }
+            } else {
+                // Admin not found
+                return res.render('error', { message: 'Admin not found or not authorized.' });
+            }
         } else if (isTeacher) {
             // Teacher login
-            user = await db.getTeacher(isTeacher, plainTextPassword);
-        } else {
-            // Student login
-            user = await db.studentGetter(userName, plainTextPassword);
-        }
+            const teacherData = await db.getTeacher(isTeacher, plainTextPassword);
 
-        if (user.rows.length !== 0) {
-            // User found
-            const hashedPassword = user.rows[0].PASSWORD;
-
-            // Compare hashed password with the plain text password provided by the user
-            const passwordMatch = await bcrypt.compare(plainTextPassword, hashedPassword);
-
-            if (passwordMatch) {
-                // Passwords match, proceed with rendering welcome page
+            if (teacherData.rows.length !== 0) {
+                // Teacher found
+                // Proceed with rendering welcome page for teacher
                 return res.render('welcome', {
                     isAdmin: false,
-                    isTeacher: isTeacher,
+                    isTeacher: true,
                     // Include other user information in the render
                 });
             } else {
-                // Passwords do not match
-                return res.render('error', { message: 'Incorrect username or password.' });
+                // Teacher not found
+                return res.render('error', { message: 'Teacher not found or not authorized.' });
             }
         } else {
-            // User not found
-            return res.render('error', { message: 'User not found or not authorized.' });
+            // Student login
+            const studentData = await db.studentGetter(userName, plainTextPassword);
+
+            if (studentData.rows.length !== 0) {
+                // Student found
+                // Proceed with rendering welcome page for student
+                return res.render('welcome', {
+                    isAdmin: false,
+                    isTeacher: false,
+                    // Include other user information in the render
+                });
+            } else {
+                // Student not found
+                return res.render('error', { message: 'Student not found or not authorized.' });
+            }
         }
     } catch (error) {
         console.error(error);
         return res.status(500).render('error', { message: 'Internal Server Error.' });
     }
 });
-
 
 
 
