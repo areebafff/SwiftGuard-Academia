@@ -1,4 +1,7 @@
 # SwiftGuard:Academia
+Empowering academic excellence, SWIFTGUARD: ACADEMIA ensures a fortified student portal experience at Fast University, fostering secure access to academic records and course materials. 
+ 
+
  A webbased university portal encapsualting the following features:
 * Routing and other REST services handled by ***express JS***.
 * Front-End contrived using ***Ejs veiwing engine*** and ***Bootstrap 4.0*** 
