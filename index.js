@@ -893,7 +893,7 @@ app.post("/", async function (req, res) {
                 console.log(plainTextPassword);
                 const hashedPassword = bcrypt.hashSync(plainTextPassword, salt);
                 // Compare hashed password with the plain text password provided by the user
-                const passwordMatch = await bcrypt.compare(plainTextPassword, hashedPassword);
+                const passwordMatch = await bcrypt.compare(Password, hashedPassword);
                 console.log(passwordMatch)
                 if (passwordMatch) {
                     // Passwords match, proceed with rendering welcome page for admin
